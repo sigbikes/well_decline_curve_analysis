@@ -1,3 +1,17 @@
+## JTS helper functions for well analysis - 06/27/2018
+def WRD_Prod_Column_Format(df):
+    cols = df.columns.tolist()
+    cols[4] = 'API/UWI'; cols[5] = 'Production Date'
+    cols[6] = 'Liquid (bbl)'; cols[7] = 'Gas (mcf)'
+    df.columns = cols;
+    return df
+
+#Edit DI Headers to match Program format
+def WRD_Head_Column_Format(df):
+    cols = df.columns.tolist()
+    df.columns - cols
+    return df
+
 ## helper functions for well analysis
 
 def load_merge_header_and_production_csv(headerCSV, productionCSV):
@@ -12,13 +26,13 @@ def load_merge_header_and_production_csv(headerCSV, productionCSV):
 			headerDF[column] = pd.to_datetime(headerDF[column], errors='coerce')
 
 	# force certain columns to be float
-	floatColumns = ['BE Oil EUR', 'BE Oil EUR NORM 10kft', 
-					'BE Oil Delta EUR', 'BE Oil Delta EUR Percent', 
-					'BE Gas EUR', 'BE Oil GAS NORM 10kft', 
-					'BE Gas Delta EUR', 'BE Gas Delta EUR Percent', 
+	floatColumns = ['BE Oil EUR', 'BE Oil EUR NORM 10kft',
+					'BE Oil Delta EUR', 'BE Oil Delta EUR Percent',
+					'BE Gas EUR', 'BE Oil GAS NORM 10kft',
+					'BE Gas Delta EUR', 'BE Gas Delta EUR Percent',
 					'BE B-Factor', 'BE Initial Rate',
-					'BE Final Rate', 'BE Initial Decline', 
-					'BE Oil RRR', 'BE Gas RRR', 
+					'BE Final Rate', 'BE Initial Decline',
+					'BE Oil RRR', 'BE Gas RRR',
 					'Perforated Interval Length']
 
 	for column in headerDF.columns.values:
@@ -28,7 +42,12 @@ def load_merge_header_and_production_csv(headerCSV, productionCSV):
 	timeSeriesDF = pd.read_csv(productionCSV, dtype={'API/UWI': 'O'})
 
 	# drop unneeded columns
-	timeSeriesDF = timeSeriesDF.drop(['Entity ID', 'API/UWI List', 'Days'], axis = 1)
+    if 'Entity ID' in timeSeriesDF.columns:
+        timeSeriesDF = timeSeriesDF.drop(['Entity ID'], axis = 1)
+    if 'API/UWI List' in timeSeriesDF.columns:
+        timeSeriesDF = timeSeriesDF.drop(['API/UWI List'], axis = 1)
+    if 'Days' in timeSeriesDF.columns:
+        timeSeriesDF = timeSeriesDF.drop(['Days'], axis = 1)
 
 	# convert production date to dtype date time and API to string
 	#################### loop through all columns with the word "date" and convert to datetime #######################
@@ -92,7 +111,7 @@ def handle_numerical_variables(dataFrame, colName):
 	while selection not in ('1', '2', '3', '4'):
 		selection = raw_input('please select 1, 2, 3, or 4: ')
 
-	# execute subsetting request 
+	# execute subsetting request
 	# greater than
 	if selection == '1':
 		while True:
@@ -103,7 +122,7 @@ def handle_numerical_variables(dataFrame, colName):
 				continue
 			else:
 				break
-		# subset wells				
+		# subset wells
 		dataFrame = dataFrame.loc[dataFrame[colName] >= criteria]
 
 	# less than
@@ -116,7 +135,7 @@ def handle_numerical_variables(dataFrame, colName):
 				print 'Please enter a number'
 				continue
 			else:
-				break						
+				break
 		# subset wells
 		dataFrame= dataFrame.loc[dataFrame[colName] <= criteria]
 
@@ -130,7 +149,7 @@ def handle_numerical_variables(dataFrame, colName):
 				print 'Please enter a number'
 				continue
 			else:
-				break						
+				break
 		# subset wells
 		criteria = raw_input('\nSelect all wells with \"%s\" == ' %colName)
 		dataFrame= dataFrame.loc[dataFrame[colName] == criteria]
@@ -149,7 +168,7 @@ def handle_numerical_variables(dataFrame, colName):
 					print 'Please enter numbers'
 					continue
 				else:
-					break		
+					break
 		# subset wells
 		dataFrame= dataFrame.loc[(dataFrame[colName] >= float(Limits[0])) & (dataFrame[colName] <= float(Limits[1]))]
 
@@ -171,7 +190,7 @@ def handle_dateTime_variables(dataFrame, colName):
 	while selection not in ('1', '2', '3', '4'):
 		selection = raw_input('please select 1, 2, 3, or 4: ')
 
-	# execute subsetting request 
+	# execute subsetting request
 	# greater than
 	if selection == '1':
 		while True:
@@ -182,7 +201,7 @@ def handle_dateTime_variables(dataFrame, colName):
 				continue
 			else:
 				break
-		# subset wells			
+		# subset wells
 		dataFrame = dataFrame.loc[dataFrame[colName] >= criteria]
 
 	# less than
@@ -195,7 +214,7 @@ def handle_dateTime_variables(dataFrame, colName):
 				print 'Please enter a date in the correct format'
 				continue
 			else:
-				break						
+				break
 		# subset wells
 		dataFrame= dataFrame.loc[dataFrame[colName] <= criteria]
 
@@ -209,7 +228,7 @@ def handle_dateTime_variables(dataFrame, colName):
 				print 'Please enter a date in the correct format'
 				continue
 			else:
-				break						
+				break
 		# subset wells
 		dataFrame= dataFrame.loc[dataFrame[colName] == criteria]
 
@@ -227,7 +246,7 @@ def handle_dateTime_variables(dataFrame, colName):
 					print 'Please enter a date in the correct format'
 					continue
 				else:
-					break		
+					break
 		# subset wells
 		dataFrame= dataFrame.loc[(dataFrame[colName] >= np.datetime64(Limits[0] + 'T00:00:00')) & (dataFrame[colName] >= np.datetime64(Limits[1] + 'T00:00:00'))]
 
@@ -250,7 +269,7 @@ def handle_object_variables(dataFrame, colName):
 	while selection not in ('1', '2'):
 		selection = raw_input('please select 1 or 2: ')
 
-	# execute subsetting request 
+	# execute subsetting request
 	# Include
 	if selection == '1':
 		criteria = raw_input('\nInput all levels of the variable \"%s\" that you would like to INCLUDE (separated by commas; names are case sensitive; do not include quotations): ' %colName)
@@ -260,7 +279,7 @@ def handle_object_variables(dataFrame, colName):
 			criteria = raw_input('\nInput all levels of the variable \"%s\" that you would like to INCLUDE (separated by commas; names are case sensitive; do not include quotations): ' %colName)
 			criteria = [x.strip() for x in criteria.split(',')]
 
-		# subset wells			
+		# subset wells
 		dataFrame = dataFrame[dataFrame[colName].isin(criteria)]
 
 	# Exclude
@@ -272,7 +291,7 @@ def handle_object_variables(dataFrame, colName):
 			criteria = raw_input('\nInput all levels of the variable \"%s\" that you would like to EXCLUDE (separated by commas; names are case sensitive; do not include quotations): ' %colName)
 			criteria = [x.strip() for x in criteria.split(',')]
 
-		# subset wells			
+		# subset wells
 		dataFrame = dataFrame[~dataFrame[colName].isin(criteria)] #`~` specifies 'not in'
 
 	return dataFrame
@@ -295,13 +314,13 @@ def plot_map(latLongDF, userLocation = None):
 	lower_left_lon = np.max(longitudes) + 0.05
 	lower_left_lat = np.min(latitudes) - 0.05
 	upper_right_lat = np.max(latitudes) + 0.05
-	 
+
 	# draw map
 	map = Basemap(projection='merc', lat_0 = 57, lon_0 = -135,
 		resolution = 'h', area_thresh = 0.1,
 		llcrnrlon=lower_left_lon, llcrnrlat=lower_left_lat,
 		urcrnrlon=upper_right_lon, urcrnrlat=upper_right_lat)
-	 
+
 	map.drawcoastlines()
 	map.drawcountries()
 	map.fillcontinents(color = 'coral')
@@ -312,35 +331,35 @@ def plot_map(latLongDF, userLocation = None):
 
 	# for shape in map.Streets:
 	# 	xx, yy, = zip(*shape)
-	# 	map.plot(xx, yy, linewidth = 1.5, color='green', alpha=.75) 
+	# 	map.plot(xx, yy, linewidth = 1.5, color='green', alpha=.75)
 
 	# add PB_block
-	map.readshapefile('../well_decline_curve_shapefiles/PB_County/PB_block', 'PB_block', drawbounds = False)
-
-	for shape in map.PB_block:
-		xx, yy, = zip(*shape)
-		map.plot(xx, yy, linewidth = 1.5, color='black', alpha=.75) 
-
-	# add PB_County
-	map.readshapefile('../well_decline_curve_shapefiles/PB_County/PB_County', 'PB_County', drawbounds = False)
-
-	for shape in map.PB_County:
-		xx, yy, = zip(*shape)
-		map.plot(xx, yy, linewidth = 1.5, color='gray', alpha=.75) 
-
-	# add PB_State
-	map.readshapefile('../well_decline_curve_shapefiles/PB_County/PB_County', 'PB_State', drawbounds = False)
-
-	for shape in map.PB_State:
-		xx, yy, = zip(*shape)
-		map.plot(xx, yy, linewidth = 1.5, color='orange', alpha=.75) 
-
-	# add PB_survey
-	map.readshapefile('../well_decline_curve_shapefiles/PB_County/PB_County', 'PB_survey', drawbounds = False)
-
-	for shape in map.PB_survey:
-		xx, yy, = zip(*shape)
-		map.plot(xx, yy, linewidth = 1.5, color='green', alpha=.75) 
+#	map.readshapefile('../well_decline_curve_shapefiles/PB_County/PB_block', 'PB_block', drawbounds = False)
+#
+#	for shape in map.PB_block:
+#		xx, yy, = zip(*shape)
+#		map.plot(xx, yy, linewidth = 1.5, color='black', alpha=.75)
+#
+#	# add PB_County
+#	map.readshapefile('../well_decline_curve_shapefiles/PB_County/PB_County', 'PB_County', drawbounds = False)
+#
+#	for shape in map.PB_County:
+#		xx, yy, = zip(*shape)
+#		map.plot(xx, yy, linewidth = 1.5, color='gray', alpha=.75)
+#
+#	# add PB_State
+#	map.readshapefile('../well_decline_curve_shapefiles/PB_County/PB_County', 'PB_State', drawbounds = False)
+#
+#	for shape in map.PB_State:
+#		xx, yy, = zip(*shape)
+#		map.plot(xx, yy, linewidth = 1.5, color='orange', alpha=.75)
+#
+#	# add PB_survey
+#	map.readshapefile('../well_decline_curve_shapefiles/PB_County/PB_County', 'PB_survey', drawbounds = False)
+#
+#	for shape in map.PB_survey:
+#		xx, yy, = zip(*shape)
+#		map.plot(xx, yy, linewidth = 1.5, color='green', alpha=.75)
 
 
 	# add wells to map
@@ -349,12 +368,12 @@ def plot_map(latLongDF, userLocation = None):
 		map.plot(x, y, 'o', markerfacecolor = 'none', markeredgecolor = 'blue', markersize=prod)
 		map.plot(x, y, 'bx', markersize=5)
 
-	# manually enter legend 
+	# manually enter legend
 	selectedWells = mpatches.Patch(color='blue', label='selected wells')
 	block = mpatches.Patch(color='black', label='block')
 	survey = mpatches.Patch(color='green', label='survey')
 	county = mpatches.Patch(color='gray', label='county')
-	
+
 	patches = [selectedWells, block, survey, county]
 
 	if userLocation:
@@ -393,7 +412,7 @@ def fit_decline_curve(wellDF, fixed_b_factor = None):
 
 	#start params
 	print 'fitting decline curve parameters'
-	
+
 	startParams = np.array([5000.0, 0.1, 0.04]) #[qi, b, di]
 
 	# eliminate outliners from curves to fix convergence issues
@@ -404,14 +423,14 @@ def fit_decline_curve(wellDF, fixed_b_factor = None):
 		stdev = np.std(declineData.loc[(declineData['API/UWI'] == API), 'BOE per day'])
 		mean = np.std(declineData.loc[(declineData['API/UWI'] == API), 'BOE per day'])
 		goodData = declineData.loc[((declineData['API/UWI'] == API) & (declineData['BOE per day'] >= mean - 3.0*stdev))]
-		
+
 		# get decline data for individual well
 		y_train = np.array(goodData['BOE per day'])
 		t_train = np.array(goodData['Time Delta'].dt.days)
 
 		# append to lists
 		smooth_t.append(t_train)
-		smooth_y.append(y_train)			
+		smooth_y.append(y_train)
 
 	# flatten list
 	smooth_t = np.array([j for i in smooth_t for j in i])
@@ -430,13 +449,13 @@ def fit_decline_curve(wellDF, fixed_b_factor = None):
 
 	if fixed_b_factor == None:
 		results = model(limits=[(0,y.max()*10.0),(1.0,4.0),(-0.99,-0.001)])
-	
+
 	else:
 		fixed_b = float(fixed_b_factor)
 		results = model(limits = [(0,y.max()*10.0),(fixed_b,fixed_b),(-0.99,-0.001)])
-	
+
 	qi, b, di = model.parameters
-	
+
 	# compute goodness-of-fit parameter
 	coefficient_of_dermination = r2_score(smooth_y, decline_curve(smooth_t, qi, b, di))
 

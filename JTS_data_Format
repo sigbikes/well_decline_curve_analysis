@@ -1,0 +1,142 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jun  7 19:20:30 2018
+
+@author: Sig
+"""
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#############################################################
+########################### Define Functions ################
+def prod_to_dca(prod):
+    '''Select columns from WRD prod export and export with
+    renamed columns for decline analysis'''
+    df = prod[['LEASE', 'API10', 'D_DATE',  'Liquid (bbl)', 'Gas (mcf)', 'Water (bbl)']]
+    cols = df.columns.tolist()
+    cols[1] = 'API/UWI'; cols[2] = 'Production Date';
+    df.columns = cols
+    return df
+
+def heads_to_dca(head):
+    '''Select columns from DI header export and export with renamed
+    columns for decline analysis'''
+    df = head[['API/UWI', 'Lease Name', 'Cum Oil', 'Gross Perforated Interval',
+               'Surface Hole Latitude (WGS84)', 'Surface Hole Longitude (WGS84)']]
+    cols = df.columns.tolist()
+    cols[2] = 'Cum Oil'; cols[3] = 'Perforated Interval Length';
+    cols[4] = 'Surface Latitude (WGS84)'; cols[5] = 'Surface Longitude (WGS84)';
+    df.columns = cols
+    return df
+
+
+def WRD_Prod_Column_Format(df):
+    cols = df.columns.tolist()
+    cols[4] = 'API/UWI'; cols[5] = 'Production Date'
+    cols[6] = 'Liquid (bbl)'; cols[7] = 'Gas (mcf)'
+    df.columns = cols;
+    return df
+
+#Edit DI Headers to match Program format
+def WRD_Head_Column_Format(df):
+    cols = df.columns.tolist()
+    df.columns - cols
+    return df
+########################### Define Functions ################
+#############################################################
+
+
+########################### Data Directories ################
+demo_dir = '/Users/Sig/Python/Git/well_decline_curve_analysis/data/'
+data_dir = '/Users/Sig/Documents/WHR_PC/Gen3/'
+proj_dir = '/Users/Sig/Python/Git/well_decline_curve_analysis/'
+########################### Data Directories ################
+
+
+########################### Data Files ######################
+demo_headers = 'Well_header_data.csv'
+demo_prod = 'Production_Time_Series.CSV'
+data = '20180605_Gen3_Prod.csv'
+data_ex = '20180605_Gen3_Prod_4DCA.csv'
+data_heads = '20180605_Gen3_Header.CSV'
+data_heads_ex = '20180605_Gen3_Heads_4DCA.CSV'
+test = 'Altimore.csv'
+test_head = 'Altimore_hdr.csv'
+########################### Data Files ######################
+
+
+########################### Read into Dataframes ######################
+demo_head_df = pd.read_csv(demo_dir+demo_headers)
+dh_cols = demo_head_df.columns.tolist()
+demo_prod_df = pd.read_csv(demo_dir+demo_prod)
+prod = pd.read_csv(data_dir+data)
+heads = pd.read_csv(data_dir+data_heads)
+h_cols = heads.columns.tolist()
+########################### Read into Dataframes ######################
+
+
+dca_prod = prod_to_dca(prod)
+dca_prod.index = dca_prod['API/UWI']
+
+
+""" Read Column Headers and Edit as Desired"""
+dp_cols = demo_prod_df.columns.tolist()
+
+prod_cols = prod.columns.tolist()
+prod_cols[6] = 'Liquid_bbl'; prod_cols[7] = 'Gas_mcf';
+prod_cols[8] = 'Water_Bbl'; prod_cols[9] = 'Well_Count'
+prod.columns = prod_cols
+
+"""Create a Cum Prod table to evaluate Well Results"""
+cum_prod = prod.groupby('API10', axis=0).sum()
+cum_prod['Days'] = cum_prod['Well_Count']/365
+cum_prod = cum_prod.drop(['BOLO_ID', 'API', 'TP', 'CP', 'CHK', 'Well_Count'], axis=1)
+cum_cols = ['Liquid_bbl', 'Gas_mcf', 'Water_bbl', 'Years']
+cum_prod.columns=cum_cols
+del cum_cols, prod_cols, dp_cols;
+
+heads['API/UWI'] = heads.API14/10000
+dca_heads = heads_to_dca(heads)
+dca_heads.index = dca_heads['API/UWI']
+dca_heads.loc[:]['Cum Oil'] = cum_prod['Liquid_bbl'][dca_heads['API/UWI']]
+
+"""Drop Washington County wells from Evaluation"""
+gen3_cum = cum_prod.drop([4247731048, 4247731051, 4247731043, 4247731053, 4247731050, 4205134127])
+gen3_heads = dca_heads.drop([4247731048, 4247731051, 4247731043, 4247731053, 4247731050, 4205134127])
+gen3_prod = dca_prod.drop([4247731048, 4247731051, 4247731043, 4247731053, 4247731050, 4205134127])
+#print(prod.describe())
+print(gen3_cum.describe())
+
+# box and whisker plots
+#gen3_cum.plot(kind='box', subplots=True, layout=(2,2), sharex=False, sharey=False)
+#plt.show()
+
+# Select Altimore data production
+Altimore = dca_prod[:][dca_prod['API/UWI'] ==4205133997]
+
+# Select Altimore header
+Alt_head = dca_heads[:][dca_heads['API/UWI'] == 4205133997]
+
+####### Write to CSV if Uncommented #######
+Altimore.to_csv(data_dir+test)
+Alt_head.to_csv(data_dir+test_head)
+dca_prod.to_csv(data_dir+data_ex)
+dca_heads.to_csv(data_dir+data_heads_ex)
+
+
+
+#timeSeriesDF = pd.read_csv(demo_dir+demo_prod, dtype={'API/UWI': 'O'})
+#headerDF = pd.read_csv(demo_dir+demo_headers, dtype={'API/UWI': 'O'})
+timeSeriesDF = pd.read_csv(data_dir+test, dtype={'API/UWI': 'O'})
+headerDF = pd.read_csv(data_dir+test_head, dtype={'API/UWI': 'O'})
+
+
+
+wellDF = pd.merge(timeSeriesDF, headerDF, on='API/UWI', how = 'right')
+#wellDF['Production Date'] = pd.to_datetime(wellDF['Production Date'])
+#wellDF['API/UWI'] = wellDF['API/UWI'].astype(object)
+
+
+

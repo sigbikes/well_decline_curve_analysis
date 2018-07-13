@@ -2,7 +2,7 @@
 Drilling info analysis
 
 This program reads well header data and production logs (e.g. exported from Drilling Info as .csv files) and
-walks the user through the genreation of decline curves for each well provided in the input data. Decine curves
+walks the user through the generation of decline curves for each well provided in the input data. Decine curves
 are fit with a the hyperbolic curve that is estimated using an iterative least squares method.
 
 Copyright 2018 Jeffrey E. Thatcher
@@ -30,6 +30,15 @@ import matplotlib.pyplot as plt
 import matplotlib
 from geopy.distance import vincenty
 
+##################### Directories ############################
+data_dir = '/Users/Sig/Documents/WHR_PC/Gen3/'
+proj_dir = '/Users/Sig/Python/Git/well_decline_curve_analysis/'
+
+######################### Files #############################
+prod = ''
+headers = ''
+
+
 # import tools and custom code
 from tools import load_merge_header_and_production_csv, swap_production_dates_for_time_delta
 from tools import current_selection, decline_curve, handle_numerical_variables, handle_dateTime_variables
@@ -38,7 +47,7 @@ from tools import handle_object_variables, plot_map, fit_decline_curve, add_BOE_
 def main(headerCSV, productionCSV):
 	analysis = Quick_TypeCurve_Analysis(headerCSV, productionCSV)
 	print '\n********************************************************************************'
-	print '*                                                                              *'	
+	print '*                                                                              *'
 	print '*                       Well Type Curve Analysis                               *'
 	print '*                                                                              *'
 	print '* Quit this program anytime by pressing `ctrl+C`                               *\n'
@@ -95,17 +104,17 @@ def main(headerCSV, productionCSV):
 				print 'Please enter a number'
 				continue
 			else:
-				break	
+				break
 
 	analysis.generate_type_curve(b_value)
 
 	# plot map
-	print '\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
-	analysis.map_selected_wells()
+	print '\n~~~~~~~~~~~~~~~~~~~~~~~~~Map Disabled~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+	#analysis.map_selected_wells()
 
 	# save csv
 	print '\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
-	analysis.save_selected_data()	
+	analysis.save_selected_data()
 
 	# plot wells individually
 	print '\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
@@ -148,7 +157,7 @@ class Quick_TypeCurve_Analysis(object):
 				print 'Please enter numbers'
 				continue
 			else:
-				break	
+				break
 
 		# add vicintiy column to data set
 		dist = np.zeros(len(self.wellDF['API/UWI']))
@@ -190,7 +199,7 @@ class Quick_TypeCurve_Analysis(object):
 
 		print '\nSelect one or more of the followig variables\n'
 		print 'all variables available...'
-		
+
 		# generate dictionary of variables
 		variableDict = dict()
 		for i,var in enumerate(allVariables):
@@ -262,7 +271,7 @@ class Quick_TypeCurve_Analysis(object):
 
 		# add decline estimate
 		ax.plot(decline_t, decline_y, '-', color='black', linewidth=5.0, label = 'Estimated Decline')
-		
+
 		# set axis limits
 		xmin = (self.wellDF['Time Delta'].min() / np.timedelta64(1, 'D')).astype(int)
 		xmin = xmin*0.15
@@ -277,7 +286,7 @@ class Quick_TypeCurve_Analysis(object):
 		num_col = math.ceil(len(set(self.wellDF['API/UWI']))/40.0) # number of columns to put in legend
 		num_col = int(num_col)
 		ax.legend(bbox_to_anchor=(1.26, 0.9), ncol = num_col, fontsize = 9-num_col, labelspacing=0.2)
-		
+
 		# Customize the major grid
 		ax.grid(which='major', linestyle='-', linewidth='0.5', color='grey')
 
@@ -304,7 +313,7 @@ class Quick_TypeCurve_Analysis(object):
 		return
 
 	def save_selected_data(self):
-		print 'saving selected wells to .csv'		
+		print 'saving selected wells to .csv'
 		self.wellDF.to_csv('./results/selected_wells.csv')
 		return
 
@@ -344,7 +353,7 @@ class Quick_TypeCurve_Analysis(object):
 
 			# add decline estimate
 			ax.plot(decline_t, decline_y, '-', color='black', linewidth=5.0, label = 'Estimated Decline')
-			
+
 			# set axis limits
 			xmin = (wellData['Time Delta'].min() / np.timedelta64(1, 'D')).astype(int)
 			xmin = xmin*0.15
@@ -357,7 +366,7 @@ class Quick_TypeCurve_Analysis(object):
 			ax.set_ylabel('BOE per Day\n[Barrels of Oil Equivalent per Day]')
 			ax.set_title('Decline Curve Parameters: qi=%.2f, b=%.4f, nominal decline rate=%.1f, r2=%.3f' %(qi, b, d_nominal, r2))
 			ax.legend(bbox_to_anchor=(1.28, 1.05))
-			
+
 			# Customize the major grid
 			ax.grid(which='major', linestyle='-', linewidth='0.5', color='grey')
 
@@ -369,7 +378,7 @@ class Quick_TypeCurve_Analysis(object):
 
 			# save and display plot
 			plt.savefig('./results/' + str(well) + '_decline_estimate.png')
-			plt.close()	
+			plt.close()
 
 		declineFitDF = pd.DataFrame(declineFit, columns = ['API/UWI', 'qi', 'b', 'nominal decline rate', 'effective decline rate[di]', 'r2'])
 		declineFitDF.to_csv('./results/individual_well_decline_curves.csv')
